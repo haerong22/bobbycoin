@@ -1,7 +1,7 @@
 package main
 
-import "github.com/haerong22/bobbycoin/cli"
+import "github.com/haerong22/bobbycoin/blockchain"
 
 func main() {
-	cli.Start()
+	blockchain.Blockchain()
 }
