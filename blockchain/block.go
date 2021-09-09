@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 
 	"github.com/haerong22/bobbycoin/db"
@@ -17,6 +18,23 @@ type Block struct {
 
 func (b *Block) persist() {
 	db.SaveBlock(b.Hash, utils.ToBytes(b))
+}
+
+var ErrNotFound = errors.New("block not found")
+
+func (b *Block) restore(data []byte) {
+	utils.FromBytes(b, data)
+}
+
+func FindBlock(hash string) (*Block, error) {
+	blockbytes := db.Block(hash)
+	if blockbytes == nil {
+		fmt.Printf("NewestHash: %s\nHeight:%d\n", b.NewestHash, b.Height)
+		return nil, ErrNotFound
+	}
+	block := &Block{}
+	block.restore(blockbytes)
+	return block, nil
 }
 
 func createBlock(data string, prevHash string, height int) *Block {
