@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/haerong22/bobbycoin/blockchain"
 	"github.com/haerong22/bobbycoin/cli"
+	"github.com/haerong22/bobbycoin/db"
 )
 
 func main() {
-	blockchain.Blockchain()
+	defer db.Close()
 	cli.Start()
 }
