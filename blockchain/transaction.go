@@ -96,3 +96,11 @@ func (m *mempool) AddTx(to string, amount int) error {
 	m.Txs = append(m.Txs, tx)
 	return nil
 }
+
+func (m *mempool) txToConfirm() []*Tx {
+	coinbase := makeCoinbaseTx("bobby")
+	txs := m.Txs
+	txs = append(txs, coinbase)
+	m.Txs = nil
+	return txs
+}
