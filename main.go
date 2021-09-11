@@ -1,11 +1,9 @@
 package main
 
-import (
-	"github.com/haerong22/bobbycoin/cli"
-	"github.com/haerong22/bobbycoin/db"
-)
+import "github.com/haerong22/bobbycoin/wallet"
 
 func main() {
-	defer db.Close()
-	cli.Start()
+	// defer db.Close()
+	// cli.Start()
+	wallet.Wallet()
 }

@@ -6,6 +6,7 @@
 *.dylib
 *.db
 *.db.*
+*.wallet
 
 # Test binary, built with `go test -c`
 *.test
