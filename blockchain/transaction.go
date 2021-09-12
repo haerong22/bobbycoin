@@ -12,11 +12,11 @@ const (
 	minerReward int = 50
 )
 
+var Mempool *mempool = &mempool{}
+
 type mempool struct {
 	Txs []*Tx
 }
-
-var Mempool *mempool = &mempool{}
 
 type Tx struct {
 	ID        string   `json:"id"`
@@ -25,25 +25,48 @@ type Tx struct {
 	TxOuts    []*TxOut `json:"txOuts"`
 }
 
-func (t *Tx) getId() {
-	t.ID = utils.Hash(t)
-}
-
 type TxIn struct {
-	TxID  string `json:"txId"`
-	Index int    `json:"index"`
-	Owner string `json:"owner"`
+	TxID      string `json:"txId"`
+	Index     int    `json:"index"`
+	Signature string `json:"signature"`
 }
 
 type TxOut struct {
-	Owner  string `json:"owner"`
-	Amount int    `json:"amount"`
+	Address string `json:"address"`
+	Amount  int    `json:"amount"`
 }
 
 type UTxOut struct {
 	TxID   string `json:"txId"`
 	Index  int    `json:"index"`
 	Amount int    `json:"amount"`
+}
+
+func (t *Tx) getId() {
+	t.ID = utils.Hash(t)
+}
+
+func (t *Tx) sign() {
+	for _, txIn := range t.TxIns {
+		txIn.Signature = wallet.Sign(t.ID, wallet.Wallet())
+	}
+}
+
+func validate(tx *Tx) bool {
+	valid := true
+	for _, txIn := range tx.TxIns {
+		prevTx := FindTx(Blockchain(), txIn.TxID)
+		if prevTx == nil {
+			valid = false
+			break
+		}
+		address := prevTx.TxOuts[txIn.Index].Address
+		valid = wallet.Verify(txIn.Signature, tx.ID, address)
+		if !valid {
+			break
+		}
+	}
+	return valid
 }
 
 func isOnMempool(UTxOut *UTxOut) bool {
@@ -77,9 +100,12 @@ func makeCoinbaseTx(address string) *Tx {
 	return &tx
 }
 
+var ErrorNotEnoughBalance = errors.New("not enough balance")
+var ErrorInvalid = errors.New("Tx Invalid")
+
 func makeTx(from, to string, amount int) (*Tx, error) {
 	if BalanceByAddress(from, Blockchain()) < amount {
-		return nil, errors.New("not enough balance")
+		return nil, ErrorNotEnoughBalance
 	}
 	var txOuts []*TxOut
 	var txIns []*TxIn
@@ -107,6 +133,11 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 		TxOuts:    txOuts,
 	}
 	tx.getId()
+	tx.sign()
+	valid := validate(tx)
+	if !valid {
+		return nil, ErrorInvalid
+	}
 	return tx, nil
 }
 
