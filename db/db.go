@@ -80,3 +80,12 @@ func Block(hash string) []byte {
 	})
 	return data
 }
+
+func EmptyBlocks() {
+	DB().Update(func(t *bolt.Tx) error {
+		utils.HandleErr(t.DeleteBucket([]byte(blockBucket)))
+		_, err := t.CreateBucket([]byte(blockBucket))
+		utils.HandleErr(err)
+		return nil
+	})
+}

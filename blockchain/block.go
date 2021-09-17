@@ -20,25 +20,10 @@ type Block struct {
 	Transactions []*Tx  `json:"transactions"`
 }
 
-func (b *Block) persist() {
-	db.SaveBlock(b.Hash, utils.ToBytes(b))
-}
-
 var ErrNotFound = errors.New("block not found")
 
 func (b *Block) restore(data []byte) {
 	utils.FromBytes(b, data)
-}
-
-func FindBlock(hash string) (*Block, error) {
-	blockbytes := db.Block(hash)
-	if blockbytes == nil {
-		fmt.Printf("NewestHash: %s\nHeight:%d\n", b.NewestHash, b.Height)
-		return nil, ErrNotFound
-	}
-	block := &Block{}
-	block.restore(blockbytes)
-	return block, nil
 }
 
 func (b *Block) mine() {
@@ -55,6 +40,21 @@ func (b *Block) mine() {
 	}
 }
 
+func persistBlock(b *Block) {
+	db.SaveBlock(b.Hash, utils.ToBytes(b))
+}
+
+func FindBlock(hash string) (*Block, error) {
+	blockbytes := db.Block(hash)
+	if blockbytes == nil {
+		fmt.Printf("NewestHash: %s\nHeight:%d\n", b.NewestHash, b.Height)
+		return nil, ErrNotFound
+	}
+	block := &Block{}
+	block.restore(blockbytes)
+	return block, nil
+}
+
 func createBlock(prevHash string, height, diff int) *Block {
 	block := &Block{
 		Hash:        "",
@@ -65,6 +65,6 @@ func createBlock(prevHash string, height, diff int) *Block {
 	}
 	block.mine()
 	block.Transactions = Mempool.txToConfirm()
-	block.persist()
+	persistBlock(block)
 	return block
 }

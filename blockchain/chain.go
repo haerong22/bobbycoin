@@ -35,6 +35,17 @@ func (b *blockchain) AddBlock() {
 	persistBlockchain(b)
 }
 
+func (b *blockchain) Replace(newBlocks []*Block) {
+	b.CurrentDifficulty = newBlocks[0].Diffilculty
+	b.Height = len(newBlocks)
+	b.NewestHash = newBlocks[0].Hash
+	persistBlockchain(b)
+	db.EmptyBlocks()
+	for _, block := range newBlocks {
+		persistBlock(block)
+	}
+}
+
 func Blocks(b *blockchain) []*Block {
 	var blocks []*Block
 	hashCursor := b.NewestHash
