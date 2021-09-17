@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/haerong22/bobbycoin/utils"
@@ -12,10 +13,19 @@ const (
 	minerReward int = 50
 )
 
-var Mempool *mempool = &mempool{}
+var m *mempool
+var memOnce sync.Once
 
 type mempool struct {
 	Txs []*Tx
+	m   sync.Mutex
+}
+
+func Mempool() *mempool {
+	memOnce.Do(func() {
+		m = &mempool{}
+	})
+	return m
 }
 
 type Tx struct {
@@ -72,7 +82,7 @@ func validate(tx *Tx) bool {
 func isOnMempool(UTxOut *UTxOut) bool {
 	exists := false
 Outer:
-	for _, tx := range Mempool.Txs {
+	for _, tx := range Mempool().Txs {
 		for _, input := range tx.TxIns {
 			if input.TxID == UTxOut.TxID && input.Index == UTxOut.Index {
 				exists = true
@@ -141,13 +151,13 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	return tx, nil
 }
 
-func (m *mempool) AddTx(to string, amount int) error {
+func (m *mempool) AddTx(to string, amount int) (*Tx, error) {
 	tx, err := makeTx(wallet.Wallet().Address, to, amount)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	m.Txs = append(m.Txs, tx)
-	return nil
+	return tx, nil
 }
 
 func (m *mempool) txToConfirm() []*Tx {
@@ -156,4 +166,11 @@ func (m *mempool) txToConfirm() []*Tx {
 	txs = append(txs, coinbase)
 	m.Txs = nil
 	return txs
+}
+
+func (m *mempool) AddPeerTx(tx *Tx) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	m.Txs = append(m.Txs, tx)
 }
