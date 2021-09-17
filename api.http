@@ -6,12 +6,12 @@ http://localhost:4000/blocks
 ###
 http://localhost:4000/balance/426f2359023a8b876ac6ed6d724cca28ce1cf42220c09e43d6c8f23acb70e833125e2e974a505068f366c9b878d6ee7d5396ab72f6b84f75cb364989cd18f517
 ###
-POST http://localhost:4000/blocks
+POST http://localhost:2000/blocks
 ###
 http://localhost:4000/blocks/c57fca35b986fc973b8f1b535ae9970c081606d5bffde0c3def73cba9cf50bf9
 
 ###
-POST http://localhost:3000/transactions
+POST http://localhost:5000/transactions
 
 {
   "to": "kim",
@@ -23,11 +23,11 @@ http://localhost:3000/mempool
 ###
 http://localhost:4000/wallet
 ###
-POST http://localhost:4000/peers
+POST http://localhost:2000/peers
 
 {
   "address": "127.0.0.1",
-  "port": "3000"
+  "port": "5000"
 }
 ###
-http://localhost:4000/peers
+http://localhost:5000/peers
