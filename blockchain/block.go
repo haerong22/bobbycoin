@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/haerong22/bobbycoin/db"
 	"github.com/haerong22/bobbycoin/utils"
 )
 
@@ -41,11 +40,11 @@ func (b *Block) mine() {
 }
 
 func persistBlock(b *Block) {
-	db.SaveBlock(b.Hash, utils.ToBytes(b))
+	dbStorage.SaveBlock(b.Hash, utils.ToBytes(b))
 }
 
 func FindBlock(hash string) (*Block, error) {
-	blockbytes := db.Block(hash)
+	blockbytes := dbStorage.FindBlock(hash)
 	if blockbytes == nil {
 		fmt.Printf("NewestHash: %s\nHeight:%d\n", b.NewestHash, b.Height)
 		return nil, ErrNotFound
@@ -63,8 +62,8 @@ func createBlock(prevHash string, height, diff int) *Block {
 		Diffilculty: diff,
 		Nonce:       0,
 	}
-	block.mine()
 	block.Transactions = Mempool().txToConfirm()
+	block.mine()
 	persistBlock(block)
 	return block
 }
