@@ -60,28 +60,22 @@ func TestBlockchain(t *testing.T) {
 }
 
 func TestBlocks(t *testing.T) {
+	blocks := []*Block{
+		{PrevHash: "x"},
+		{PrevHash: ""},
+	}
 	fakeBlocks := 0
 	dbStorage = fakeDB{
 		fakeFindBlock: func() []byte {
-			var b *Block
-			if fakeBlocks == 0 {
-				b = &Block{
-					Height:   1,
-					PrevHash: "x",
-				}
-			}
-			if fakeBlocks == 1 {
-				b = &Block{
-					Height: 1,
-				}
-			}
-			fakeBlocks++
-			return utils.ToBytes(b)
+			defer func() {
+				fakeBlocks++
+			}()
+			return utils.ToBytes(blocks[fakeBlocks])
 		},
 	}
 	bc := &blockchain{}
-	blocks := Blocks(bc)
-	if reflect.TypeOf(blocks) != reflect.TypeOf([]*Block{}) {
+	blocksResult := Blocks(bc)
+	if reflect.TypeOf(blocksResult) != reflect.TypeOf([]*Block{}) {
 		t.Error("Blocks() should return a slice of blocks.")
 	}
 }
@@ -119,4 +113,75 @@ func TestFindTx(t *testing.T) {
 			t.Error("Tx should be found.")
 		}
 	})
+}
+
+func TestGetDifficulty(t *testing.T) {
+	blocks := []*Block{
+		{PrevHash: "x"},
+		{PrevHash: "x"},
+		{PrevHash: "x"},
+		{PrevHash: "x"},
+		{PrevHash: ""},
+	}
+	fakeBlocks := 0
+	dbStorage = fakeDB{
+		fakeFindBlock: func() []byte {
+			defer func() {
+				fakeBlocks++
+			}()
+			return utils.ToBytes(blocks[fakeBlocks])
+		},
+	}
+	type test struct {
+		height int
+		want   int
+	}
+	tests := []test{
+		{height: 0, want: defaultDifficulty},
+		{height: 2, want: defaultDifficulty},
+		{height: 5, want: 3},
+	}
+	for _, tc := range tests {
+		bc := &blockchain{Height: tc.height, CurrentDifficulty: defaultDifficulty}
+		got := getDifficulty(bc)
+		if got != tc.want {
+			t.Errorf("getDifficulty() should return %d got %d", tc.want, got)
+		}
+	}
+}
+
+func TestAddPeerBlock(t *testing.T) {
+	bc := &blockchain{
+		Height:            1,
+		CurrentDifficulty: 1,
+		NewestHash:        "xx",
+	}
+	m.Txs["test"] = &Tx{}
+	nb := &Block{
+		Diffilculty: 2,
+		Hash:        "test",
+		Transactions: []*Tx{
+			{ID: "test"},
+		},
+	}
+	bc.AddPeerBlock(nb)
+	if bc.CurrentDifficulty != 2 || bc.Height != 2 || bc.NewestHash != "test" {
+		t.Error("AddPeerBlock() should mutate the blockchain.")
+	}
+}
+
+func TestReplace(t *testing.T) {
+	bc := &blockchain{
+		Height:            1,
+		CurrentDifficulty: 1,
+		NewestHash:        "xx",
+	}
+	blocks := []*Block{
+		{Diffilculty: 2, Hash: "test"},
+		{Diffilculty: 2, Hash: "test"},
+	}
+	bc.Replace(blocks)
+	if bc.CurrentDifficulty != 2 || bc.Height != 2 || bc.NewestHash != "test" {
+		t.Error("Replace() should mutate the blockchain.")
+	}
 }
