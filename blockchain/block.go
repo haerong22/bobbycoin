@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -46,7 +45,6 @@ func persistBlock(b *Block) {
 func FindBlock(hash string) (*Block, error) {
 	blockbytes := dbStorage.FindBlock(hash)
 	if blockbytes == nil {
-		fmt.Printf("NewestHash: %s\nHeight:%d\n", b.NewestHash, b.Height)
 		return nil, ErrNotFound
 	}
 	block := &Block{}
